@@ -76,11 +76,25 @@ function dedupeChunks(chunks) {
 
 function extractPdfText() {
   const layerText = dedupeChunks(getTextFromPdfTextLayers());
-  if (!layerText.length) {
+  if (layerText.length) {
+    return layerText.join(' ');
+  }
+
+  const fallbackRaw = normalizeText(document.body.innerText || '');
+  if (!fallbackRaw) {
     return '';
   }
 
-  return layerText.join(' ');
+  const lines = fallbackRaw
+    .split('\n')
+    .map((line) => normalizeText(line))
+    .filter((line) => line && !isProbablyUiNoise(line));
+
+  if (!lines.length) {
+    return '';
+  }
+
+  return lines.join(' ');
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
